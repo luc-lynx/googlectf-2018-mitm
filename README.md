@@ -21,7 +21,7 @@ Client and server run a Diffie-Hellman based protocol to get a shared key and pe
 
 ![The handshake](handshake.png)
 
-And how it looks in code:
+And how it looks in the code:
 
 ```python
 def Handshake(password, reader, writer):
@@ -53,7 +53,7 @@ def Handshake(password, reader, writer):
     return sharedKey
 ```
 
-The proof is computed as follows:
+Proof is computed as follows:
 
 ```python
 def ComputeProof(key, data):
@@ -72,18 +72,18 @@ To get the flag we need to send an encrypted message ```b'getflag'``` to the ser
 
 As we can see from the handshake code:
 
-1. There's no way to leak the password (PSS) as it's used only as a parameter of HMAC.
+1. There's no way to leak the password (PSS) as it's used only as a parameter of HMAC-SHA256.
 
 2. Server checks whether his nonce equals to the client's nonce, so we can't impersonate the client and replay the server's nonce and server's proof back to the server.
 
 3. The public key is checked for being not in ```(b'\x00'*32, b'\x01' + (b'\x00' * 31))```
 
-So as we can't leak the PSS, probably we don't need it and we can try to subvert the protocol. If we perfrom a MITM attack and make the keys equal for the both MITM sides, then we don't need to know the PSS and we can pass the client's proof to the server and we'll be authenticated. So all in all:
+So as we can't leak the PSS, probably we don't need it and we can try to subvert the protocol in another way. If we perfrom a MITM attack and make the keys equal for the both MITM sides (from the client to the attacker and from the attacker to the server), then we don't need to know the PSS and we can pass the client's proof to the server and pass the authentication step. Thus:
  
  1. We need to have the same key for the both sides during MITM
  2. We need to know the MITM key
  
-The public key check looks "weak" so we can look for some more values for it. I found some on [djb's web site](http://cr.yp.to/ecdh.html#validate), picked the following one:
+The public key check looks "weak" so we can look for some more values which the public key isn't checked against. We can find some on [djb's web site](http://cr.yp.to/ecdh.html#validate), and I picked the following one:
 
 ```python
 325606250916557431795983626356110631294008115727848805560023387167927233504
@@ -108,9 +108,11 @@ for i in range(30):
 print("[~] Num of different keys: {}".format(len(keys)))
 ```
 
-The test showed that the shared key doesn't depend on the private key values (they're fresh for each iteration), so we can carry out the attack.
+The test produced 30 equal shared keys, so we can carry out the attack.
 
 # The attack
+
+The complete code of the attack:
 
 ```python
 #!/usr/bin/env python3
@@ -193,6 +195,7 @@ if __name__ == "__main__":
 
 In the code above I used the shared key I got during the experiment. The code just uses the 32-byte value that produces the mentioned shared key and passes client's nonce and proof to the server. Then it encryps ```b'getflag'``` using the shared key and reads the frag from the server. 
 
+The code produces the following output:
 
 ```python
 python solution.py
@@ -202,13 +205,11 @@ python solution.py
 87a32b8304af3c1225b7c1b78ec0b0759710c98a3790b75c01312b8b3a5ad140
 [~] Got AUTHENTICATED
 b'CTF{kae3eebav8Ac7Mi0RKgh6eeLisuut9oP}'
-
-Process finished with exit code 0
 ```
 
 # Some takeaways and conclusions
 
-* If the protocol allows for so called "contributory behaviour", Curve25519 public keys must be either validated or another [mitigation](https://vnhacker.blogspot.com/2015/09/why-not-validating-curve25519-public.html) must be applied.
+* If the protocol allows for so called "contributory behaviour", Curve25519 public keys must either be validated or another [mitigation](https://vnhacker.blogspot.com/2015/09/why-not-validating-curve25519-public.html) must be applied.
 
 * There's an [interesting](https://research.kudelskisecurity.com/2017/04/25/should-ecdh-keys-be-validated/) [discussion](https://moderncrypto.org/mail-archive/curves/2017/000896.html) whether Curve25519 public keys should be validated. 
 
