@@ -9,7 +9,7 @@ We need to crack a DH-based protocol that allows for so called "contributory beh
 
 ![The challenge](mitm.png)
 
-The organisers provided us with a network endpoint and an archive with code. The app can work as either server or client depending on the first network message.
+The organizers provided us with a network endpoint and an archive with code. The app can work as either server or client depending on the first network message.
  
 ```python
     server_or_client = ReadLine(reader)
@@ -17,7 +17,7 @@ The organisers provided us with a network endpoint and an archive with code. The
     is_client = server_or_client[0] in b'cC'
 ```
 
-Client and server run a Diffie-Hellman based protocol to get a shared key and perform mutual auhentication using a pre shared secret (PSS) like it's depicted on the following scheme:
+Client and server run a Diffie-Hellman based protocol to get a shared key and perform mutual authentication using a pre shared secret (PSS) like it's depicted on the following scheme:
 
 ![The handshake](handshake.png)
 
@@ -78,7 +78,7 @@ As we can see from the handshake code:
 
 3. The public key is checked for being not in ```(b'\x00'*32, b'\x01' + (b'\x00' * 31))```
 
-So as we can't leak the PSS, probably we don't need it and we can try to subvert the protocol in another way. If we perfrom a MITM attack and make the keys equal for the both MITM sides (from the client to the attacker and from the attacker to the server), then we don't need to know the PSS and we can pass the client's proof to the server and pass the authentication step. Thus:
+So as we can't leak the PSS, probably we don't need it and we can try to subvert the protocol in another way. If we perform a MITM attack and make the keys equal for the both MITM sides (from the client to the attacker and from the attacker to the server), then we don't need to know the PSS and we can pass the client's proof to the server and pass the authentication step. Thus:
  
  1. We need to have the same key for the both sides during MITM
  2. We need to know the MITM key
@@ -193,7 +193,7 @@ if __name__ == "__main__":
 
 ```
 
-In the code above I used the shared key I got during the experiment. The code just uses the 32-byte value that produces the mentioned shared key and passes client's nonce and proof to the server. Then it encryps ```b'getflag'``` using the shared key and reads the frag from the server. 
+In the code above I used the shared key I got from the experiment. The code just uses the 32-byte value that produces the mentioned shared key and passes client's nonce and proof to the server. Then it encrypts ```b'getflag'``` using the shared key and reads the frag from the server. 
 
 The code produces the following output:
 
@@ -209,7 +209,7 @@ b'CTF{kae3eebav8Ac7Mi0RKgh6eeLisuut9oP}'
 
 # Some takeaways and conclusions
 
-* If the protocol allows for so called "contributory behaviour", Curve25519 public keys must either be validated or another [mitigation](https://vnhacker.blogspot.com/2015/09/why-not-validating-curve25519-public.html) must be applied.
+* If the protocol allows for so called "contributory behavior", Curve25519 public keys must either be validated or another [mitigation](https://vnhacker.blogspot.com/2015/09/why-not-validating-curve25519-public.html) must be applied.
 
 * There's an [interesting](https://research.kudelskisecurity.com/2017/04/25/should-ecdh-keys-be-validated/) [discussion](https://moderncrypto.org/mail-archive/curves/2017/000896.html) whether Curve25519 public keys should be validated. 
 
