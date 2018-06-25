@@ -19,7 +19,7 @@ The organisers provided us with a network endpoint and an archive with code. The
 
 Client and server run a Diffie-Hellman based protocol to get a shared key and perform mutual auhentication using a pre shared secret (PSS) like it's depicted on the following scheme:
 
-[The handshake](handshake.png)
+![The handshake](handshake.png)
 
 And how it looks in code:
 
